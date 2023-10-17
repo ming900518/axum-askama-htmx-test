@@ -1,6 +1,8 @@
 #![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::OnceLock};
 
+mod types;
+
 use askama::Template;
 use axum::{
     extract::Path,
@@ -12,14 +14,14 @@ use axum::{
     routing::{get, post},
     Form, Router, Server,
 };
-use axum_macros::debug_handler;
 use futures::Stream;
-use serde::Deserialize;
 use tokio::sync::{mpsc::Sender, RwLock};
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
 use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::{filter, prelude::*};
+use types::{ChatView, Index, SendMsgReq, SseView};
+
 
 static TX: OnceLock<RwLock<HashMap<usize, Sender<String>>>> = OnceLock::new();
 
@@ -52,23 +54,6 @@ async fn main() {
         .serve(router)
         .await
         .expect("Server startup failed.");
-}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-struct Index;
-
-#[derive(Template)]
-#[template(path = "chat.html")]
-struct ChatView {
-    user_id: String,
-}
-
-#[derive(Template)]
-#[template(path = "sse.html")]
-struct SseView {
-    from_user_id: usize,
-    data: String,
 }
 
 async fn index() -> Html<String> {
@@ -105,13 +90,6 @@ async fn sse(
     }
 }
 
-#[derive(Deserialize)]
-struct SendMsgReq {
-    target_id: usize,
-    message: String,
-}
-
-#[debug_handler]
 async fn send_msg(Path(user_id): Path<usize>, Form(req): Form<SendMsgReq>) -> StatusCode {
     let Some(global_tx) = TX.get() else {
         return StatusCode::INTERNAL_SERVER_ERROR;
