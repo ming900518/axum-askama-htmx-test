@@ -1,3 +1,4 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::OnceLock};
 
 use askama::Template;
@@ -20,7 +21,7 @@ use tower_http::trace::TraceLayer;
 use tracing::Level;
 use tracing_subscriber::{filter, prelude::*};
 
-static TX: OnceLock<RwLock<HashMap<usize, Option<Sender<String>>>>> = OnceLock::new();
+static TX: OnceLock<RwLock<HashMap<usize, Sender<String>>>> = OnceLock::new();
 
 #[tokio::main]
 async fn main() {
@@ -96,8 +97,7 @@ async fn sse(
 
     match TX.get() {
         Some(global_tx) => {
-            let mut map = global_tx.write().await;
-            map.insert(user_id, Some(tx));
+            global_tx.write().await.insert(user_id, tx);
             let stream = ReceiverStream::new(rx).map(|data| Ok(Event::default().data(data)));
             Ok(Sse::new(stream).keep_alive(KeepAlive::new().text("keep-alive-text")))
         }
@@ -117,7 +117,7 @@ async fn send_msg(Path(user_id): Path<usize>, Form(req): Form<SendMsgReq>) -> St
         return StatusCode::INTERNAL_SERVER_ERROR;
     };
 
-    if let (Some(Some(_)), Some(Some(tx))) = (
+    if let (Some(_), Some(tx)) = (
         global_tx.read().await.get(&user_id),
         global_tx.read().await.get(&req.target_id),
     ) {
@@ -133,7 +133,7 @@ async fn send_msg(Path(user_id): Path<usize>, Form(req): Form<SendMsgReq>) -> St
             )
             .await
         {
-            Ok(_) => StatusCode::OK,
+            Ok(()) => StatusCode::OK,
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     } else {
