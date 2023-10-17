@@ -1,0 +1,17 @@
+<!DOCTYPE html/>
+<html>
+    <head>
+        <script
+            src="https://unpkg.com/htmx.org@1.9.6"
+            integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+            crossorigin="anonymous"></script>
+        <script src="https://unpkg.com/htmx.org/dist/ext/sse.js" crossorigin="anonymous"></script>
+    </head>
+
+    <body>
+        <h1>HTMX + Template Chat Test</h1>
+        <div>
+            <button hx-post="/start" hx-swap="outerHTML">Start Chatting</button>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,12 @@
+<h2>User ID: {{ user_id }}</h2>
+<div hx-ext="sse" sse-connect="/sse/{{user_id}}">
+    <form
+        hx-post="/send_msg/{{user_id}}"
+        hx-trigger="keyup[key === 'Enter']"
+        hx-swap="none"
+        hx-on::after-request="document.getElementById('message_input').value = ''">
+        <input type="text" name="target_id" placeholder="Enter Target User ID" hx-swap="none" />
+        <input id="message_input" type="text" name="message" placeholder="Enter message..." hx-swap="none" />
+    </form>
+    <div sse-swap="message" hx-swap="afterend"></div>
+</div>
