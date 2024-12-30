@@ -1,7 +1,7 @@
 <h2>User ID: {{ user_id }}</h2>
-<div hx-ext="sse" sse-connect="/sse/{{user_id}}">
+<div hx-ext="sse" sse-connect="/sse">
     <form
-        hx-post="/send_msg/{{user_id}}"
+        hx-post="/send_msg"
         hx-trigger="keyup[key === 'Enter']"
         hx-swap="none"
         hx-on::after-request="document.getElementById('message_input').value = ''">
